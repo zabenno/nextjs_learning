@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 export default function Home() {
   const [fileUploaded, setFileUploaded] = useState(false);
+  const [csvData, setCsvData] = useState<string[]>([]);
 
   const handleFileUpload = (newValue: boolean) => {
     setFileUploaded(newValue);
@@ -15,18 +16,15 @@ export default function Home() {
     <main className="min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Upload a CSV File</h1>
       <div className="flex">
-        <div className="w-49% py-10 px-4 bg-gray-200 border-r border-gray-200 rounded-2xl shadow-lg border-black-400">
-          <CsvUploader fileUploaded={handleFileUpload} />
+        <div className="max-w-[70%] min-w-[70%] py-10 px-4 bg-gray-200 border-r border-gray-200 rounded-2xl shadow-lg border-black-400">
+          <CsvUploader fileUploaded={handleFileUpload} setCsvData={setCsvData} />
         </div>
         <div className="w-2% bg-auto px-2"></div>
         {fileUploaded && (
-          <div className="w-49% py-10 px-4 bg-gray-200 border-r border-gray-200 rounded-2xl shadow-lg border-black-400">
-            <CsvDetails />
+          <div className="max-w-[30%] min-w-[30%] py-10 px-4 bg-gray-200 border-r border-gray-200 rounded-2xl shadow-lg border-black-400">
+            <CsvDetails csvData={csvData} />
           </div>
         )}
-        {/* <div className="w-49% py-10 px-4 bg-gray-200 border-r border-gray-200 rounded-2xl shadow-lg border-black-400">
-          <CsvDetails />
-        </div> */}
       </div>
     </main>
   );

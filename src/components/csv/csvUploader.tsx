@@ -3,14 +3,13 @@
 import { useState, useCallback } from 'react';
 import Papa from 'papaparse';
 
-type CsvRow = string[];
-
 type Props = {
   fileUploaded: (val: boolean) => boolean;
+  setCsvData: (data: string[]) => void;
 };
 
-export default function CsvUploader({ fileUploaded }: Props) {
-  const [csvData, setCsvData] = useState<CsvRow[]>([]);
+export default function CsvUploader({ fileUploaded, setCsvData }: Props) {
+  const [csvData, setCsvDataLocal] = useState<string[]>([]);
 
   const handleFile = useCallback((file: File) => {
     if (!file.name.endsWith('.csv')) {
@@ -33,7 +32,8 @@ export default function CsvUploader({ fileUploaded }: Props) {
         return;
       }
 
-      const data = parsed.data as CsvRow[];
+      const data = parsed.data as string[];
+      setCsvDataLocal(data);
       setCsvData(data);
 
       fileUploaded(true);
@@ -85,6 +85,7 @@ export default function CsvUploader({ fileUploaded }: Props) {
 
       {csvData.length > 0 && (
         <div className="overflow-auto mt-6">
+          <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-300 text-sm">
             <thead className="bg-gray-100">
               <tr>
@@ -109,6 +110,7 @@ export default function CsvUploader({ fileUploaded }: Props) {
                 ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
     </div>
