@@ -1,10 +1,6 @@
 "use client";
 import { useState } from 'react';
 
-type Props = {
-  csvData: string[];
-};
-
 type Entry = {
   site_name: string;
   k_value: number;
@@ -28,7 +24,12 @@ type DataProcessingRequest = {
   measurements: DataRow[];
 }
 
-export default function CsvDetails({ csvData }: Props) {
+type Props = {
+  csvData: string[];
+  setProcessedFiles: (data: string[]) => void;
+};
+
+export default function CsvDetails({ csvData, setProcessedFiles }: Props) {
   const [entries, setEntries] = useState<Entry[]>([{
     site_name: '', k_value: 1, date_column: 0, level_column: 0, pipe_diameter_mm: 250, roughness: 0.1
   }]);
@@ -46,7 +47,40 @@ export default function CsvDetails({ csvData }: Props) {
     }]);
   };
 
-  const handleSubmit = () => {
+  const downloadCSV = (data: any, filename: string) => {
+    // Convert API response data to CSV format
+    const csvRows: any[] = [];
+
+    // Add headers
+    csvRows.push(['DateTime', 'Level', 'Q']);
+
+    data = data.received || data; // Handle both cases where data is directly received or wrapped in 'received'
+    
+    // Add the measurements data to CSV
+    if (data.measurements && Array.isArray(data.measurements)) {
+      data.measurements.forEach((measurement: any) => {
+        csvRows.push([measurement.dateTime || '', measurement.level || '', measurement.q || '']);
+      });
+    }
+    
+    // Convert to CSV string
+    const csvContent = csvRows.map(row => 
+      row.map((field: any) => `"${field}"`).join(',')
+    ).join('\n');
+    
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleSubmit = async () => {
     console.log('Starting Row:', firstDataRow);
     // Handle form submission logic here
     console.log('Submitted entries:', entries);
@@ -70,6 +104,25 @@ export default function CsvDetails({ csvData }: Props) {
     });
 
     console.log('Data Processing Request Bodies:', dataProcessingRequestBodies);
+
+    const url = 'http://127.0.0.1:8000/echo'
+
+  const responses = await Promise.all(dataProcessingRequestBodies.map(body => 
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+    }).then(res => res.json())
+  ));
+
+  responses.forEach((response, index) => {
+          const siteName = entries[index]?.site_name || `Site_${index + 1}`;
+          const filename = `${siteName.replace(/[^a-z0-9]/gi, '_')}_data.csv`;
+          downloadCSV(response, filename);
+        });
+
   };
 
   const removeEntry = (index: number) => {
